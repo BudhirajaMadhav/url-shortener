@@ -2,12 +2,17 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
 	"time"
 
+	"github.com/budhirajamadhav/url-shortener/model"
+	"github.com/budhirajamadhav/url-shortener/rand"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readpref"	
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 // const connectionString = "mongodb+srv://<project>:<password>@cluster0.1dhwv.mongodb.net/url-shortener-db?retryWrites=true&w=majority"
@@ -39,3 +44,33 @@ func init() {
 
 }
 
+func shortenUrl(urlPath model.ShortenedUrl) string {
+	insertResult, err :=  collection.InsertOne(context.Background(), urlPath)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Url shortened with id", insertResult.InsertedID , "with path of", urlPath.Path)
+
+	return urlPath.Path
+
+}
+
+func 
+
+func ShortenUrl(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("content-type", "application/x-www-form-urlencode")
+	w.Header().Set("Allow-Control-Allow-Method", "POST")
+
+	var urlPath model.ShortenedUrl
+	_ = json.NewDecoder(r.Body).Decode(&urlPath)
+	if urlPath.Path == "" {
+		urlPath.Path = rand.String(6)
+	}
+	shortenUrl(urlPath)
+
+	w.Write([]byte(fmt.Sprintf("<h1>Your url is shortened to /%s</h1>", urlPath.Path)))
+	
+}
