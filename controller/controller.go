@@ -72,16 +72,13 @@ func Redirector(fallback http.Handler) http.HandlerFunc {
 		err := collection.FindOne(context.Background(), bson.D{{"path", path}}).Decode(&urlPath)
 		fmt.Println(urlPath, "urlpath")
 		if err != nil {
-			w.Write([]byte(err.Error()))
+			w.Write([]byte("Path does not exist"))
+			return
 		} else {
 			http.Redirect(w, r, urlPath.URL, http.StatusFound)
 			return
 		}
-
-		fallback.ServeHTTP(w, r)
-
 	}
-
 }
 
 func ShortenUrl(w http.ResponseWriter, r *http.Request) {
@@ -91,8 +88,13 @@ func ShortenUrl(w http.ResponseWriter, r *http.Request) {
 
 	var urlPath model.ShortenedUrl
 	_ = json.NewDecoder(r.Body).Decode(&urlPath)
+	
 	if urlPath.Path == "" {
 		urlPath.Path = rand.String(6)
+	} else if pathStillExists(urlPath.Path) {
+		alreadyExistsError := "<h1><span id=\"errorSpan\" style=\"color:red;\">Path still exists, choose another or use random by not mentioning any path</span></h1>"
+		w.Write([]byte(alreadyExistsError))
+		return
 	}
 
 	urlPath.Path = "/" + urlPath.Path
@@ -100,5 +102,16 @@ func ShortenUrl(w http.ResponseWriter, r *http.Request) {
 	shortenUrl(urlPath)
 
 	w.Write([]byte(fmt.Sprintf("<h1>Your url is shortened to %s</h1>", urlPath.Path)))
+}
+
+func pathStillExists(path string) bool {
+	
+	var urlPath model.ShortenedUrl
+	err := collection.FindOne(context.Background(), bson.D{{"path", path}}).Decode(&urlPath)
+	if err != nil {
+		return true
+	}
+
+	return false
 
 }
