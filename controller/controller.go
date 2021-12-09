@@ -107,8 +107,8 @@ func ShortenUrl(w http.ResponseWriter, r *http.Request) {
 func pathStillExists(path string) bool {
 	
 	var urlPath model.ShortenedUrl
-	err := collection.FindOne(context.Background(), bson.D{{"path", path}}).Decode(&urlPath)
-	if err != nil {
+	err := collection.FindOne(context.Background(), bson.D{{"path", "/" + path}}).Decode(&urlPath)
+	if err == nil {
 		return true
 	}
 
